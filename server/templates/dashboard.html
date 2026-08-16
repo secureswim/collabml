@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Projects · CollabML{% endblock %}
+{% block content %}
+<section class="hero row between end">
+  <div>
+    <div class="eyebrow">Experiment workspace</div>
+    <h1>Projects</h1>
+    <p class="lede">Follow an idea from baseline to breakthrough.</p>
+  </div>
+  <button class="button primary" data-dialog-open="new-project">+ New project</button>
+</section>
+
+{% if projects %}
+<section class="project-grid">
+  {% for project in projects %}
+  <a class="project-card" href="/projects/{{ project.id }}">
+    <div class="row between start">
+      <span class="project-icon">{{ project.name[0] | upper }}</span>
+      <span class="arrow">↗</span>
+    </div>
+    <h2>{{ project.name }}</h2>
+    <p>{{ project.description or "No description yet." }}</p>
+    <div class="card-meta">
+      <span>{{ project.experiment_count }} experiment{% if project.experiment_count != 1 %}s{% endif %}</span>
+      {% if project.primary_metric %}<span>Target: {{ project.primary_metric }}</span>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</section>
+{% else %}
+<section class="empty-state">
+  <div class="empty-glyph">⌁</div>
+  <h2>Start with one question</h2>
+  <p>Create a project for the model or research problem you are exploring.</p>
+  <button class="button primary" data-dialog-open="new-project">Create your first project</button>
+</section>
+{% endif %}
+
+<dialog id="new-project" class="modal">
+  <form method="post" action="/projects" class="stack">
+    <div class="row between start">
+      <div><div class="eyebrow">New project</div><h2>What are you exploring?</h2></div>
+      <button type="button" class="icon-button" data-dialog-close aria-label="Close">×</button>
+    </div>
+    <label>Project name<input name="name" required maxlength="100" placeholder="plant-disease-classifier"></label>
+    <label>Description<textarea name="description" rows="3" placeholder="What is the goal of this project?"></textarea></label>
+    <div class="form-grid">
+      <label>Primary metric<input name="primary_metric" placeholder="val_accuracy"></label>
+      <label>Goal<select name="metric_goal"><option value="maximize">Higher is better</option><option value="minimize">Lower is better</option></select></label>
+    </div>
+    <button class="button primary wide">Create project</button>
+  </form>
+</dialog>
+{% endblock %}
+

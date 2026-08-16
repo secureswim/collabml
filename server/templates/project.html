@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_tree.html" import render_node %}
+{% block title %}{{ project.name }} · CollabML{% endblock %}
+{% block content %}
+<nav class="breadcrumbs"><a href="/">Projects</a><span>/</span><span>{{ project.name }}</span></nav>
+<section class="project-head row between end">
+  <div>
+    <div class="eyebrow">Project</div>
+    <h1>{{ project.name }}</h1>
+    <p class="lede">{{ project.description or "Track what you try, why, and what happens." }}</p>
+  </div>
+  <button class="button primary" data-dialog-open="new-experiment">+ Start experiment</button>
+</section>
+
+<section class="stat-strip">
+  <div><span>Experiments</span><strong>{{ experiments | length }}</strong></div>
+  <div><span>Completed</span><strong>{{ experiments | selectattr('status', 'equalto', 'completed') | list | length }}</strong></div>
+  <div><span>Primary metric</span><strong>{{ project.primary_metric or "Not set" }}</strong></div>
+  <div><span>Best run</span><strong>{% if best %}<a href="/experiments/{{ best.id }}">{{ best.metrics.get(project.primary_metric) }}</a>{% else %}—{% endif %}</strong></div>
+</section>
+
+{% if experiments %}
+<section class="panel">
+  <div class="section-head row between center">
+    <div><div class="eyebrow">Lineage</div><h2>How the model evolved</h2></div>
+    <div class="legend"><span><i class="dot running"></i>Running</span><span><i class="dot completed"></i>Complete</span><span><i class="dot failed"></i>Failed</span></div>
+  </div>
+  <div class="tree-wrap"><ul class="experiment-tree">{% for root in forest %}{{ render_node(root, project) }}{% endfor %}</ul></div>
+</section>
+
+<section class="panel">
+  <div class="section-head"><div class="eyebrow">Recent</div><h2>Experiment log</h2></div>
+  <div class="experiment-list">
+    {% for experiment in experiments %}
+    <a href="/experiments/{{ experiment.id }}" class="experiment-row">
+      <span class="status-badge {{ experiment.status }}">{{ experiment.status }}</span>
+      <span class="experiment-main"><strong>{% if experiment.starred %}★ {% endif %}{{ experiment.title }}</strong><small>{{ experiment.hypothesis }}</small></span>
+      {% if project.primary_metric %}<span class="experiment-metric"><small>{{ project.primary_metric }}</small><strong>{{ experiment.metrics.get(project.primary_metric, "—") }}</strong></span>{% endif %}
+      <span class="experiment-date">{{ experiment.created_at[:10] }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<section class="empty-state compact">
+  <div class="empty-glyph">↳</div><h2>Your baseline starts here</h2>
+  <p>Record the first hypothesis and the choices that define it.</p>
+  <button class="button primary" data-dialog-open="new-experiment">Start an experiment</button>
+</section>
+{% endif %}
+
+<dialog id="new-experiment" class="modal wide-modal">
+  <form method="post" action="/projects/{{ project.id }}/experiments" class="stack">
+    <div class="row between start">
+      <div><div class="eyebrow">New experiment</div><h2>What do you expect?</h2></div>
+      <button type="button" class="icon-button" data-dialog-close aria-label="Close">×</button>
+    </div>
+    <label>Short title<input name="title" required maxlength="160" placeholder="Baseline with ResNet18"></label>
+    <label>Hypothesis<textarea name="hypothesis" required rows="3" placeholder="A pretrained ResNet18 should establish a strong baseline because..."></textarea></label>
+    {% if experiments %}
+    <label>Continue from (optional)<select name="parent_id"><option value="">Start a root experiment</option>{% for experiment in experiments %}<option value="{{ experiment.id }}">{{ experiment.title }} · {{ experiment.id }}</option>{% endfor %}</select></label>
+    {% endif %}
+    <label>Parameters <span class="label-note">JSON object</span><textarea class="code-input" name="params_json" rows="6">{
+  "model": "resnet18",
+  "learning_rate": 0.001,
+  "epochs": 10
+}</textarea></label>
+    <label>Colab notebook URL <span class="label-note">optional</span><input type="url" name="notebook_url" placeholder="https://colab.research.google.com/..."></label>
+    <button class="button primary wide">Start experiment</button>
+  </form>
+</dialog>
+{% endblock %}
+

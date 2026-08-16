@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ experiment.title }} · CollabML{% endblock %}
+{% block content %}
+<nav class="breadcrumbs"><a href="/">Projects</a><span>/</span><a href="/projects/{{ project.id }}">{{ project.name }}</a><span>/</span><span>{{ experiment.id }}</span></nav>
+
+<section class="experiment-head">
+  <div class="row between start">
+    <div>
+      <div class="row gap-sm center"><span class="status-badge {{ experiment.status }}">{{ experiment.status }}</span>{% if experiment.starred %}<span class="starred">★ Promising</span>{% endif %}</div>
+      <h1>{{ experiment.title }}</h1>
+      <p class="experiment-id">{{ experiment.id }} · Created {{ experiment.created_at[:10] }}</p>
+    </div>
+    <div class="row gap-sm">
+      <form method="post" action="/experiments/{{ experiment.id }}/star"><button class="button secondary">{% if experiment.starred %}Unstar{% else %}☆ Star{% endif %}</button></form>
+      <button class="button primary" data-dialog-open="fork-experiment">Fork this run</button>
+    </div>
+  </div>
+  <div class="hypothesis-card"><span>Hypothesis</span><p>{{ experiment.hypothesis }}</p></div>
+</section>
+
+{% if comparison %}
+<section class="change-banner">
+  <div><span class="eyebrow">Compared with parent</span><strong>{{ comparison.parameter_changes | length }} parameter change{% if comparison.parameter_changes | length != 1 %}s{% endif %}</strong></div>
+  <a class="button secondary" href="/compare?left={{ parent.id }}&right={{ experiment.id }}">Open full comparison →</a>
+</section>
+{% endif %}
+
+<div class="detail-grid">
+  <section class="panel">
+    <div class="section-head"><div class="eyebrow">Configuration</div><h2>Parameters</h2></div>
+    {% if experiment.params %}<div class="kv-table">{% for key, value in experiment.params.items() %}<div><code>{{ key }}</code><span>{{ value }}</span></div>{% endfor %}</div>{% else %}<p class="muted">No parameters logged.</p>{% endif %}
+  </section>
+  <section class="panel">
+    <div class="section-head"><div class="eyebrow">Outcome</div><h2>Metrics</h2></div>
+    {% if experiment.metrics %}<div class="metric-grid">{% for key, value in experiment.metrics.items() %}<div><span>{{ key }}</span><strong>{{ value }}</strong></div>{% endfor %}</div>{% else %}<p class="muted">No metrics logged yet.</p>{% endif %}
+  </section>
+</div>
+
+<section class="panel conclusion-panel">
+  <div class="section-head"><div class="eyebrow">What we learned</div><h2>{% if experiment.status == 'failed' %}Failure notes{% else %}Conclusion{% endif %}</h2></div>
+  <p class="conclusion">{{ experiment.conclusion or "This experiment is still waiting for a conclusion." }}</p>
+</section>
+
+<section class="panel">
+  <div class="section-head"><div class="eyebrow">Context</div><h2>Connections</h2></div>
+  <div class="connections">
+    {% if parent %}<a href="/experiments/{{ parent.id }}"><span>Parent</span><strong>← {{ parent.title }}</strong><small>{{ parent.id }}</small></a>{% endif %}
+    {% for child in children %}<a href="/experiments/{{ child.id }}"><span>Child</span><strong>{{ child.title }} →</strong><small>{{ child.id }}</small></a>{% endfor %}
+    {% if experiment.notebook_url %}<a href="{{ experiment.notebook_url }}" target="_blank" rel="noopener"><span>Source</span><strong>Open Colab ↗</strong><small>Notebook</small></a>{% endif %}
+    {% if not parent and not children and not experiment.notebook_url %}<p class="muted">No connected runs or notebook yet.</p>{% endif %}
+  </div>
+</section>
+
+<section class="panel snippet-panel">
+  <div class="section-head row between center"><div><div class="eyebrow">Continue in Colab</div><h2>Fork snippet</h2></div><button class="button secondary small" data-copy-target="fork-snippet">Copy code</button></div>
+  <pre id="fork-snippet"><code>{{ snippet }}</code></pre>
+</section>
+
+<dialog id="fork-experiment" class="modal wide-modal">
+  <form method="post" action="/projects/{{ project.id }}/experiments" class="stack">
+    <div class="row between start">
+      <div><div class="eyebrow">Fork {{ experiment.id }}</div><h2>Change one thing</h2></div>
+      <button type="button" class="icon-button" data-dialog-close aria-label="Close">×</button>
+    </div>
+    <input type="hidden" name="parent_id" value="{{ experiment.id }}">
+    <input type="hidden" name="notebook_url" value="{{ experiment.notebook_url }}">
+    <label>Short title<input name="title" required maxlength="160" placeholder="Lower learning rate"></label>
+    <label>Hypothesis<textarea name="hypothesis" required rows="3" placeholder="Reducing the learning rate should..."></textarea></label>
+    <label>Changed parameters <span class="label-note">only overrides are needed</span><textarea class="code-input" name="params_json" rows="5">{
+  "learning_rate": 0.0001
+}</textarea></label>
+    <button class="button primary wide">Create fork</button>
+  </form>
+</dialog>
+{% endblock %}
+

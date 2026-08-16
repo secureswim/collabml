@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Sign in · CollabML{% endblock %}
+{% block nav %}{% endblock %}
+{% block content %}
+<section class="login-wrap">
+  <div class="login-card">
+    <div class="eyebrow">Private workspace</div>
+    <h1>Your experiments,<br>connected.</h1>
+    <p>Enter the private token configured on your CollabML server.</p>
+    <form method="post" action="/login" class="stack">
+      <label>Access token
+        <input type="password" name="token" autocomplete="current-password" required autofocus placeholder="Your private token">
+      </label>
+      <button class="button primary wide">Open workspace</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
+

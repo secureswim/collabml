@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Compare experiments · CollabML{% endblock %}
+{% block content %}
+<nav class="breadcrumbs"><a href="/">Projects</a><span>/</span><a href="/projects/{{ project.id }}">{{ project.name }}</a><span>/</span><span>Compare</span></nav>
+<section class="hero">
+  <div class="eyebrow">Experiment comparison</div>
+  <h1>What changed?</h1>
+  <p class="lede">Choices on the left, consequence on the right.</p>
+</section>
+
+<section class="compare-head grid-compare">
+  <div><span>Before</span><a href="/experiments/{{ comparison.left.id }}"><h2>{{ comparison.left.title }}</h2><code>{{ comparison.left.id }}</code></a><p>{{ comparison.left.hypothesis }}</p></div>
+  <div class="compare-arrow">→</div>
+  <div><span>After</span><a href="/experiments/{{ comparison.right.id }}"><h2>{{ comparison.right.title }}</h2><code>{{ comparison.right.id }}</code></a><p>{{ comparison.right.hypothesis }}</p></div>
+</section>
+
+<section class="panel">
+  <div class="section-head"><div class="eyebrow">Input</div><h2>Parameter changes</h2></div>
+  {% if comparison.parameter_changes %}
+  <div class="diff-table"><div class="diff-header"><span>Parameter</span><span>Before</span><span></span><span>After</span></div>{% for change in comparison.parameter_changes %}<div><code>{{ change.name }}</code><span>{{ change.left if change.left is not none else "—" }}</span><span class="mini-arrow">→</span><strong>{{ change.right if change.right is not none else "—" }}</strong></div>{% endfor %}</div>
+  {% else %}<p class="muted">No parameter changes between these experiments.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <div class="section-head"><div class="eyebrow">Outcome</div><h2>Metric differences</h2></div>
+  {% if comparison.metric_changes %}
+  <div class="diff-table metric-diff"><div class="diff-header"><span>Metric</span><span>Before</span><span>Delta</span><span>After</span></div>{% for change in comparison.metric_changes %}<div><code>{{ change.name }}</code><span>{{ change.left if change.left is not none else "—" }}</span><span class="delta {% if change.delta is number and change.delta > 0 %}positive{% elif change.delta is number and change.delta < 0 %}negative{% endif %}">{% if change.delta is not none %}{{ "%+.4g" | format(change.delta) }}{% else %}→{% endif %}</span><strong>{{ change.right if change.right is not none else "—" }}</strong></div>{% endfor %}</div>
+  {% else %}<p class="muted">No metric differences between these experiments.</p>{% endif %}
+  <p class="fine-print">A positive delta is not always an improvement. Interpret it using the metric's meaning.</p>
+</section>
+
+<section class="compare-conclusions grid-compare">
+  <div><span>Before conclusion</span><p>{{ comparison.left.conclusion or "No conclusion recorded." }}</p></div><div></div><div><span>After conclusion</span><p>{{ comparison.right.conclusion or "No conclusion recorded." }}</p></div>
+</section>
+{% endblock %}
+
